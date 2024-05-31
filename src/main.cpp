@@ -26,6 +26,7 @@ hw_timer_t *My_timer = NULL;
 struct measurements {
   float Vrms;
   float Irms;
+  float RealPower;
 };
 
 
@@ -79,22 +80,27 @@ struct measurements measureRms(int* voltageSamples, int* currentSamples, int nsa
 
   int32_t sumVoltage = 0;
   int32_t sumCurrent = 0;
+  int32_t sumInstantaneousPower = 0;
   for (int i = 0; i < nsamples; i++) {
     int32_t y_voltage = (voltageSamples[i] - voltageMean);
     int32_t y_current = (currentSamples[i] - currentMean);
+    int32_t y_instantaneousPower = y_voltage * y_current;
   
     sumVoltage += y_voltage * y_voltage;
     sumCurrent += y_current * y_current;
+    sumInstantaneousPower += y_instantaneousPower;
   }
 
   float ym_voltage = (float) sumVoltage / (float) nsamples;
   float ym_current = (float) sumCurrent / (float) nsamples;
+  float ym_realPower = (float) sumInstantaneousPower / (float) nsamples;
 
   float Vrms = sqrt(ym_voltage);
   float Irms = sqrt(ym_current);
 
   eletricMeasurements.Vrms = Vrms * 3.3/4096.0;
   eletricMeasurements.Irms = Irms * 3.3/4096.0;
+  eletricMeasurements.RealPower = ym_realPower * 3.3/4096.0;
 
   return eletricMeasurements;
 }
@@ -122,7 +128,9 @@ void setup() {
   Serial.print("Vrms_esp32: ");
   Serial.print(eletricMeasurements.Vrms, 5);
   Serial.print(" Irms_esp32: ");
-  Serial.println(eletricMeasurements.Irms, 5);
+  Serial.print(eletricMeasurements.Irms, 5);
+  Serial.print(" Real Power_esp32: ");
+  Serial.println(eletricMeasurements.RealPower, 5);
 }
 
 void loop() {
